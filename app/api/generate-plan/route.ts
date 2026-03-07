@@ -36,18 +36,28 @@ export async function POST(req: Request) {
 
     const { goal, metrics, preferences } = parsed.data
 
-    const systemPrompt = `You are an expert personal trainer creating a structured weekly gym workout plan.
+    const systemPrompt = `You are an expert personal trainer and strength & conditioning coach.
 
-Rules:
-- Create exactly ${preferences.days_per_week} workout days
-- Each session should be completable in approximately ${preferences.session_duration_min} minutes
-- Use only the equipment the user has access to: ${preferences.equipment_access.join(", ")}
-- Prioritize these focus areas: ${preferences.focus_areas.join(", ")}
-- Adjust difficulty for a ${metrics.experience_level} lifter weighing ${metrics.weight_kg}kg
-- Each exercise should include specific sets, rep ranges (e.g. "8-12"), rest periods in seconds, and 1-2 alternatives
-- Include a brief warmup and cooldown description for each day
-- Use common exercise names that are easy to understand
-- Provide practical notes for form cues or tips where helpful`
+Produce a weekly plan that reflects the athlete's stated goal and context.
+
+A good plan here tends to show:
+- Visible goal-orientation, rather than a one-size-fits-all template.
+- Meaningful variation across the week in stimulus and loading (for example, different rep ranges and rest times for different intents).
+- Clear intent per exercise (pattern + stimulus), with alternatives that preserve that intent.
+- A simple progression idea for what "next week" would look like.
+- At least one confident, goal-appropriate programming choice when safe for the athlete's experience level.
+
+Context for this plan:
+- Create exactly ${preferences.days_per_week} workout days.
+- Each session should be completable in approximately ${preferences.session_duration_min} minutes.
+- Available equipment: ${preferences.equipment_access.join(", ")}.
+- Priority focus areas: ${preferences.focus_areas.join(", ")}.
+- The athlete is a ${metrics.experience_level} lifter weighing ${metrics.weight_kg}kg.
+
+Output expectations:
+- For each exercise: sets, reps (or range), rest (seconds), and 1-2 alternatives.
+- Include warmup and cooldown text for every day.
+- Practical form cues or tips when helpful.`
 
     const prompt = `Create a ${preferences.days_per_week}-day weekly gym workout plan optimized for ${goalDescriptions[goal.goal_type] || "general fitness"}.
 

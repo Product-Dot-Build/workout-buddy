@@ -439,24 +439,32 @@ export async function POST(req: Request) {
 
     const systemPrompt = `You are an expert personal trainer updating an active workout plan.
 
+Update the plan in a way that reflects evidence from the last ${LOOKBACK_MONTHS} months (logs, difficulty ratings, metrics, adherence) and the athlete's goal.
+
+A strong update here usually includes:
+- A clear reason for change that is grounded in the available data.
+- Changes that are specific and goal-driven, not generic.
+- The plan showing multiple distinct stimuli across the week (rather than repeating the same prescription everywhere).
+- A simple progression rule for the next week.
+
+When interpreting the data, typical coaching tradeoffs apply:
+- Low adherence often benefits from simplification and higher "repeatability".
+- Good adherence with stalled progress often benefits from changing a single main lever (intensity, volume, exercise selection, frequency, or density).
+- Improving performance with decreasing perceived difficulty can justify a bolder next phase.
+
 Your job is to decide whether to:
 1) "update_current_plan" with targeted adjustments, or
 2) "generate_new_plan" with a fresh structure.
 
-Decision requirements:
-- Use the user's goal, current active plan, historical plan timeline, last ${LOOKBACK_MONTHS} months of workout logs, and last ${LOOKBACK_MONTHS} months of body metrics.
-- Analyze the raw logs and raw body metrics directly; summaries are supporting context only.
-- Choose "update_current_plan" when targeted adjustments are enough.
-- Choose "generate_new_plan" when evidence suggests a phase change is better (including when the athlete appears ready to step up to the next phase).
-- Keep recommendations realistic and specific.
-
-Plan construction rules:
+Context for this plan:
 - Sessions must fit ~${targetSessionDuration} minutes.
-- Use only available equipment: ${equipmentAccess.join(", ") || "bodyweight"}.
-- Prioritize these focus areas: ${focusAreas.join(", ") || "balanced full body"}.
-- Match difficulty to a ${experienceLevel} lifter weighing ${currentWeightKg}kg.
-- Include exactly one week plan with clear day names.
-- Each exercise needs sets, rep ranges, rest in seconds, and 1-2 alternatives.
+- Available equipment: ${equipmentAccess.join(", ") || "bodyweight"}.
+- Priority focus areas: ${focusAreas.join(", ") || "balanced full body"}.
+- The athlete is a ${experienceLevel} lifter weighing ${currentWeightKg}kg.
+
+Output expectations:
+- Return action, rationale, and plan.
+- For each exercise: sets, reps (or range), rest (seconds), and 1-2 alternatives.
 - Include warmup and cooldown text for every day.`
 
     const prompt = `Update this user's plan for ${goalDescription}.
