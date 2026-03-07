@@ -8,7 +8,7 @@ FitForge is a Next.js 16 (App Router) fitness/workout planning PWA. It uses Supa
 
 - `pnpm dev` starts the dev server on port 3000 (Turbopack). See `README.md` for all scripts.
 - The app requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`. Without real Supabase credentials the landing page, login, and sign-up pages render, but auth flows and data operations will fail.
-- `OPENAI_API_KEY` (or the appropriate Gemini key) is only needed for AI plan generation/update endpoints.
+- `AI_GATEWAY_API_KEY` is needed for AI plan generation/update endpoints (the app uses `google/gemini-3-flash` via the Vercel AI SDK provider registry). The README incorrectly references `OPENAI_API_KEY`.
 
 ### Gotchas
 
