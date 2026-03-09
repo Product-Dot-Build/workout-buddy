@@ -15,8 +15,12 @@ interface SaveWorkoutLogInput {
 
 export async function saveWorkoutLog(input: SaveWorkoutLogInput) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Not authenticated")
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error(authError?.message || "Not authenticated")
 
   const { data, error } = await supabase
     .from("workout_logs")
@@ -32,17 +36,17 @@ export async function saveWorkoutLog(input: SaveWorkoutLogInput) {
     .select()
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message || "Failed to save workout log")
 
-  // Update plan difficulty rating if provided
   if (input.planId && input.difficultyRating) {
-    await supabase
+    const { error: planUpdateError } = await supabase
       .from("workout_plans")
       .update({ difficulty_rating: input.difficultyRating })
       .eq("id", input.planId)
+
+    if (planUpdateError) throw new Error(planUpdateError.message || "Failed to update workout plan")
   }
 
-  // Immediate invalidation so redirected page sees fresh data
   updateTag("dashboard")
   updateTag("progress")
   updateTag("workout-logs")
