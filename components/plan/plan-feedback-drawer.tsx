@@ -100,13 +100,13 @@ export function PlanFeedbackDrawer({ plan, goal }: PlanFeedbackDrawerProps) {
           className="mt-2 w-full gap-2 border-border/80 transition-all duration-300 hover:border-primary/20 hover:bg-primary/5"
         >
           <MessageSquare className="h-4 w-4" />
-          Adjust Plan
+          Adjust with AI
         </Button>
       </DrawerTrigger>
       <DrawerContent className="border-border bg-card">
         <DrawerHeader>
           <DrawerTitle className="font-display text-2xl uppercase tracking-wide">
-            How should we adjust your plan?
+            How should AI adjust your plan?
           </DrawerTitle>
         </DrawerHeader>
         <div className="flex flex-col gap-4 px-4">

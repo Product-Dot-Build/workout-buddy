@@ -10,6 +10,11 @@ interface SavePlanInput {
   weekNumber?: number
 }
 
+interface UpdatePlanInput {
+  planId: string
+  planOutput: WorkoutPlanOutput
+}
+
 export async function savePlan({ goalId, planOutput, weekNumber = 1 }: SavePlanInput) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -40,6 +45,32 @@ export async function savePlan({ goalId, planOutput, weekNumber = 1 }: SavePlanI
   if (error) throw new Error(error.message)
 
   // Immediate invalidation so the redirected dashboard sees the new plan
+  updateTag("plan")
+  updateTag("workout-plans")
+  updateTag("dashboard")
+
+  return data
+}
+
+export async function updatePlan({ planId, planOutput }: UpdatePlanInput) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Not authenticated")
+
+  const { data, error } = await supabase
+    .from("workout_plans")
+    .update({
+      name: planOutput.name,
+      description: planOutput.description,
+      plan_data: { days: planOutput.days },
+    })
+    .eq("id", planId)
+    .eq("user_id", user.id)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+
   updateTag("plan")
   updateTag("workout-plans")
   updateTag("dashboard")

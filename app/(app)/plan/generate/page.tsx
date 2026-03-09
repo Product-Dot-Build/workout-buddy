@@ -7,6 +7,7 @@ import { GoalStep } from "@/components/onboarding/goal-step"
 import { MetricsStep } from "@/components/onboarding/metrics-step"
 import { PreferencesStep } from "@/components/onboarding/preferences-step"
 import { PlanPreview } from "@/components/onboarding/plan-preview"
+import { ManualPlanEditor } from "@/components/plan/manual-plan-editor"
 import { saveGoal, saveInitialMetrics, savePlan } from "@/app/actions/plan"
 import { Loader2, ArrowLeft, ArrowRight, Check, Flame } from "lucide-react"
 import { toast } from "sonner"
@@ -210,7 +211,22 @@ export default function GeneratePlanPage() {
           </div>
         )}
         {step === 3 && !isGenerating && generatedPlan && (
-          <PlanPreview plan={generatedPlan} />
+          <div className="flex flex-col gap-4">
+            <ManualPlanEditor
+              plan={generatedPlan}
+              onSave={async (updatedPlan) => {
+                setGeneratedPlan(updatedPlan)
+              }}
+              triggerLabel="Edit Manually"
+              title="Review and edit your generated plan"
+              description="Make any final changes before saving your workout plan."
+              saveLabel="Apply Changes"
+              successMessage="Plan edits applied."
+              errorMessage="Could not apply your changes."
+              triggerClassName="w-full"
+            />
+            <PlanPreview plan={generatedPlan} />
+          </div>
         )}
       </div>
 
