@@ -108,7 +108,6 @@ export async function saveWorkoutLog(input: SaveWorkoutLogInput) {
         .eq("id", input.planId)
 
       planUpdateErrorMessage = planUpdateError?.message ?? null
-      if (planUpdateError) throw new Error(planUpdateError.message)
     }
 
     // #region agent log
@@ -118,6 +117,8 @@ export async function saveWorkoutLog(input: SaveWorkoutLogInput) {
       planUpdateErrorMessage,
     })
     // #endregion
+
+    if (planUpdateErrorMessage) throw new Error(planUpdateErrorMessage)
 
     updateTag("dashboard")
     updateTag("progress")
