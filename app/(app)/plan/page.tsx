@@ -47,16 +47,6 @@ async function PlanData() {
       <AppHeader
         title={activePlan.name}
         subtitle={activePlan.description ?? undefined}
-        action={
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border/80 transition-all duration-300 hover:border-primary/20 hover:bg-primary/5"
-            asChild
-          >
-            <Link href="/plan/generate">Adjust</Link>
-          </Button>
-        }
       />
       <PlanOverview plan={activePlan} goal={activeGoal} />
     </div>
