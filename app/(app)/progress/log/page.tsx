@@ -16,6 +16,7 @@ async function WorkoutLogData() {
     <WorkoutLogForm
       activePlan={data.activePlan}
       weeklyLogCount={data.weeklyLogCount}
+      lastLogForDay={data.lastLogForDay}
     />
   )
 }
