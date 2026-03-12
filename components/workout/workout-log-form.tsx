@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { ExerciseLogForm } from "@/components/workout/exercise-log-form"
 import { DifficultyRating } from "@/components/workout/difficulty-rating"
 import { saveWorkoutLog } from "@/app/actions/workout-log"
+import { useWorkoutLogSessionStore } from "@/lib/stores/workout-log-session"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Loader2, Check, Dumbbell, History, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
@@ -22,8 +23,20 @@ interface WorkoutLogFormProps {
 export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: WorkoutLogFormProps) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
-  const [difficulty, setDifficulty] = useState(0)
-  const [notes, setNotes] = useState("")
+
+  const {
+    planId,
+    workoutDayName,
+    exerciseSets,
+    difficulty,
+    notes,
+    initSession,
+    updateExerciseSets,
+    setDifficulty,
+    setNotes,
+    setExerciseSets,
+    clearSession,
+  } = useWorkoutLogSessionStore()
 
   const todayDayIndex = activePlan
     ? weeklyLogCount % activePlan.plan_data.days.length
@@ -43,10 +56,22 @@ export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: Wo
     return map
   }, [todayWorkout])
 
-  const [exerciseSets, setExerciseSets] = useState<Record<string, LoggedSet[]>>(initialSets)
+  // Hydrate from persisted state only when session matches current workout; otherwise init fresh
+  useEffect(() => {
+    if (!todayWorkout || !activePlan) return
+    const matchesSession = planId === activePlan.id && workoutDayName === todayWorkout.name
+    if (matchesSession) return
+    initSession({
+      planId: activePlan.id,
+      workoutDayName: todayWorkout.name,
+      exerciseSets: initialSets,
+      difficulty: 0,
+      notes: "",
+    })
+  }, [activePlan?.id, todayWorkout?.name, planId, workoutDayName, initSession])
 
   function handleSetsChange(exerciseName: string, sets: LoggedSet[]) {
-    setExerciseSets((prev) => ({ ...prev, [exerciseName]: sets }))
+    updateExerciseSets(exerciseName, sets)
   }
 
   function applyLastAsTemplate() {
@@ -92,6 +117,7 @@ export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: Wo
         difficultyRating: difficulty,
         notes,
       })
+      clearSession()
       toast.success("Workout logged!")
       router.push("/dashboard")
       router.refresh()
