@@ -11,6 +11,8 @@ export interface WorkoutLogSessionState {
   exerciseSets: Record<string, LoggedSet[]>
   difficulty: number
   notes: string
+  /** Whether the persisted state has been rehydrated from localStorage */
+  _hasHydrated: boolean
 }
 
 interface WorkoutLogSessionActions {
@@ -26,11 +28,13 @@ interface WorkoutLogSessionActions {
   updateExerciseSets: (exerciseName: string, sets: LoggedSet[]) => void
   setDifficulty: (difficulty: number) => void
   setNotes: (notes: string) => void
-  /** Clear state after successful save - call from form on save success */
+  /** Clear form data after successful save, keeping identity so the effect doesn't re-init mid-navigate */
   clearSession: () => void
+  /** Mark hydration as complete — called by persist onRehydrateStorage */
+  setHasHydrated: (v: boolean) => void
 }
 
-const initialState: WorkoutLogSessionState = {
+const initialState: Omit<WorkoutLogSessionState, "_hasHydrated"> = {
   planId: null,
   workoutDayName: null,
   exerciseSets: {},
@@ -42,6 +46,7 @@ export const useWorkoutLogSessionStore = create<WorkoutLogSessionState & Workout
   persist(
     (set) => ({
       ...initialState,
+      _hasHydrated: false,
 
       initSession: ({ planId, workoutDayName, exerciseSets, difficulty = 0, notes = "" }) =>
         set({
@@ -63,11 +68,32 @@ export const useWorkoutLogSessionStore = create<WorkoutLogSessionState & Workout
 
       setNotes: (notes) => set({ notes }),
 
-      clearSession: () => set(initialState),
+      clearSession: () =>
+        set({
+          exerciseSets: {},
+          difficulty: 0,
+          notes: "",
+          // Keep planId & workoutDayName so the hydration effect doesn't
+          // see a mismatch and re-init before navigation completes
+        }),
+
+      setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),
     {
       name: "fitforge-workout-log-session",
       storage: createJSONStorage(() => localStorage),
+      // Exclude transient fields from persistence
+      partialize: (state) => ({
+        planId: state.planId,
+        workoutDayName: state.workoutDayName,
+        exerciseSets: state.exerciseSets,
+        difficulty: state.difficulty,
+        notes: state.notes,
+      }),
+      onRehydrateStorage: () => (state) => {
+        // Called once after persist restores from localStorage
+        state?.setHasHydrated(true)
+      },
     }
   )
 )

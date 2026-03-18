@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,19 +24,20 @@ export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: Wo
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
 
-  const {
-    planId,
-    workoutDayName,
-    exerciseSets,
-    difficulty,
-    notes,
-    initSession,
-    updateExerciseSets,
-    setDifficulty,
-    setNotes,
-    setExerciseSets,
-    clearSession,
-  } = useWorkoutLogSessionStore()
+  // Granular selectors — only re-render when the specific slice changes
+  const planId = useWorkoutLogSessionStore((s) => s.planId)
+  const workoutDayName = useWorkoutLogSessionStore((s) => s.workoutDayName)
+  const exerciseSets = useWorkoutLogSessionStore((s) => s.exerciseSets)
+  const difficulty = useWorkoutLogSessionStore((s) => s.difficulty)
+  const notes = useWorkoutLogSessionStore((s) => s.notes)
+  const hasHydrated = useWorkoutLogSessionStore((s) => s._hasHydrated)
+
+  const initSession = useWorkoutLogSessionStore((s) => s.initSession)
+  const updateExerciseSets = useWorkoutLogSessionStore((s) => s.updateExerciseSets)
+  const setDifficulty = useWorkoutLogSessionStore((s) => s.setDifficulty)
+  const setNotes = useWorkoutLogSessionStore((s) => s.setNotes)
+  const setExerciseSets = useWorkoutLogSessionStore((s) => s.setExerciseSets)
+  const clearSession = useWorkoutLogSessionStore((s) => s.clearSession)
 
   const todayDayIndex = activePlan
     ? weeklyLogCount % activePlan.plan_data.days.length
@@ -56,11 +57,16 @@ export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: Wo
     return map
   }, [todayWorkout])
 
-  // Hydrate from persisted state only when session matches current workout; otherwise init fresh
+  // Wait for hydration before deciding whether to init a fresh session.
+  // Without this guard, the effect fires with default state (planId=null),
+  // sees a mismatch, and overwrites the persisted session.
   useEffect(() => {
+    if (!hasHydrated) return
     if (!todayWorkout || !activePlan) return
+
     const matchesSession = planId === activePlan.id && workoutDayName === todayWorkout.name
     if (matchesSession) return
+
     initSession({
       planId: activePlan.id,
       workoutDayName: todayWorkout.name,
@@ -68,11 +74,14 @@ export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: Wo
       difficulty: 0,
       notes: "",
     })
-  }, [activePlan?.id, todayWorkout?.name, planId, workoutDayName, initSession])
+  }, [hasHydrated, activePlan?.id, todayWorkout?.name, planId, workoutDayName, initSession, initialSets])
 
-  function handleSetsChange(exerciseName: string, sets: LoggedSet[]) {
-    updateExerciseSets(exerciseName, sets)
-  }
+  const handleSetsChange = useCallback(
+    (exerciseName: string, sets: LoggedSet[]) => {
+      updateExerciseSets(exerciseName, sets)
+    },
+    [updateExerciseSets]
+  )
 
   function applyLastAsTemplate() {
     if (!lastLogForDay || !todayWorkout) return
@@ -135,6 +144,15 @@ export function WorkoutLogForm({ activePlan, weeklyLogCount, lastLogForDay }: Wo
           <Dumbbell className="h-7 w-7 text-primary" />
         </div>
         <p className="text-muted-foreground">No active plan. Create a plan first to start logging.</p>
+      </div>
+    )
+  }
+
+  // Show nothing until hydration completes so we don't flash empty form
+  if (!hasHydrated) {
+    return (
+      <div className="flex justify-center px-4 py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
