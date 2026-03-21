@@ -9,13 +9,18 @@ interface WorkoutHistoryProps {
   logs: WorkoutLog[]
 }
 
-export function WorkoutHistory({ logs }: WorkoutHistoryProps) {
+export function WorkoutHistory({ logs: initialLogs }: WorkoutHistoryProps) {
+  const [logs, setLogs] = useState(initialLogs)
   const [selectedLog, setSelectedLog] = useState<WorkoutLog | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
   function openDetail(log: WorkoutLog) {
     setSelectedLog(log)
     setDetailOpen(true)
+  }
+
+  function handleDeleted(logId: string) {
+    setLogs((prev) => prev.filter((l) => l.id !== logId))
   }
 
   if (logs.length === 0) {
@@ -76,6 +81,7 @@ export function WorkoutHistory({ logs }: WorkoutHistoryProps) {
         log={selectedLog}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        onDeleted={handleDeleted}
       />
     </>
   )

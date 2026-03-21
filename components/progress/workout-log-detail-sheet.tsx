@@ -1,29 +1,63 @@
 "use client"
 
+import { useState, useTransition } from "react"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dumbbell, Clock, BarChart2 } from "lucide-react"
+import { Dumbbell, Clock, BarChart2, Trash2 } from "lucide-react"
+import { toast } from "sonner"
+import { deleteWorkoutLog } from "@/app/actions/workout-log"
 import type { WorkoutLog, LoggedExercise } from "@/lib/types"
 
 interface WorkoutLogDetailSheetProps {
   log: WorkoutLog | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDeleted?: (logId: string) => void
 }
 
 export function WorkoutLogDetailSheet({
   log,
   open,
   onOpenChange,
+  onDeleted,
 }: WorkoutLogDetailSheetProps) {
+  const [isPending, startTransition] = useTransition()
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   if (!log) return null
 
   const exercises = Array.isArray(log.exercises) ? log.exercises : []
+
+  function handleDelete() {
+    startTransition(async () => {
+      try {
+        await deleteWorkoutLog(log!.id)
+        toast.success("Workout session deleted")
+        setConfirmOpen(false)
+        onOpenChange(false)
+        onDeleted?.(log!.id)
+      } catch {
+        toast.error("Failed to delete session")
+      }
+    })
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -32,10 +66,53 @@ export function WorkoutLogDetailSheet({
         className="h-[85vh] rounded-t-2xl border-t border-border"
       >
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2 text-left">
-            <Dumbbell className="h-5 w-5 text-primary" />
-            {log.workout_day}
-          </SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2 text-left">
+              <Dumbbell className="h-5 w-5 text-primary" />
+              {log.workout_day}
+            </SheetTitle>
+
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  aria-label="Delete session"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete workout session?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete the{" "}
+                    <span className="font-medium text-foreground">
+                      {log.workout_day}
+                    </span>{" "}
+                    session logged on{" "}
+                    {new Date(log.completed_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    . This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isPending ? "Deleting…" : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
@@ -68,7 +145,7 @@ export function WorkoutLogDetailSheet({
             </p>
           )}
 
-          <ScrollArea className="h-[calc(85vh-12rem)]">
+          <ScrollArea className="h-[calc(85vh-14rem)]">
             <div className="space-y-3 pr-3">
               {exercises.map((ex: LoggedExercise) => (
                 <div

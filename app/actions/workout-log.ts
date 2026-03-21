@@ -54,3 +54,25 @@ export async function saveWorkoutLog(input: SaveWorkoutLogInput) {
 
   return data
 }
+
+export async function deleteWorkoutLog(logId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error(authError?.message || "Not authenticated")
+
+  const { error } = await supabase
+    .from("workout_logs")
+    .delete()
+    .eq("id", logId)
+    .eq("user_id", user.id)
+
+  if (error) throw new Error(error.message || "Failed to delete workout log")
+
+  updateTag("dashboard")
+  updateTag("progress")
+  updateTag("workout-logs")
+}
