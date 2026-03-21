@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from "react"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,19 +25,19 @@ import { toast } from "sonner"
 import { deleteWorkoutLog } from "@/app/actions/workout-log"
 import type { WorkoutLog, LoggedExercise } from "@/lib/types"
 
-interface WorkoutLogDetailSheetProps {
+interface WorkoutLogDetailDrawerProps {
   log: WorkoutLog | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDeleted?: (logId: string) => void
 }
 
-export function WorkoutLogDetailSheet({
+export function WorkoutLogDetailDrawer({
   log,
   open,
   onOpenChange,
   onDeleted,
-}: WorkoutLogDetailSheetProps) {
+}: WorkoutLogDetailDrawerProps) {
   const [isPending, startTransition] = useTransition()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -60,17 +60,14 @@ export function WorkoutLogDetailSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="h-[85vh] rounded-t-2xl border-t border-border"
-      >
-        <SheetHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[85vh]">
+        <DrawerHeader className="text-left">
           <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-2 text-left">
+            <DrawerTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5 text-primary" />
               {log.workout_day}
-            </SheetTitle>
+            </DrawerTitle>
 
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
               <AlertDialogTrigger asChild>
@@ -113,9 +110,9 @@ export function WorkoutLogDetailSheet({
               </AlertDialogContent>
             </AlertDialog>
           </div>
-        </SheetHeader>
+        </DrawerHeader>
 
-        <div className="mt-4 space-y-4">
+        <div className="px-4 pb-6 space-y-4">
           <div className="flex flex-wrap gap-3 text-sm">
             <span className="text-muted-foreground">
               {new Date(log.completed_at).toLocaleDateString("en-US", {
@@ -169,7 +166,7 @@ export function WorkoutLogDetailSheet({
                         </span>
                         {set.completed && (
                           <span className="ml-auto text-xs text-success">
-                            ✓ Done
+                            Done
                           </span>
                         )}
                       </div>
@@ -180,7 +177,7 @@ export function WorkoutLogDetailSheet({
             </div>
           </ScrollArea>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   )
 }

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { WorkoutLog } from "@/lib/types"
 import { Dumbbell, Clock, ChevronRight } from "lucide-react"
-import { WorkoutLogDetailSheet } from "./workout-log-detail-sheet"
+import { WorkoutLogDetailDrawer } from "./workout-log-detail-drawer"
 
 interface WorkoutHistoryProps {
   logs: WorkoutLog[]
@@ -77,7 +77,7 @@ export function WorkoutHistory({ logs: initialLogs }: WorkoutHistoryProps) {
         })}
       </div>
 
-      <WorkoutLogDetailSheet
+      <WorkoutLogDetailDrawer
         log={selectedLog}
         open={detailOpen}
         onOpenChange={setDetailOpen}
